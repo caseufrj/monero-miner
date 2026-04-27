@@ -1,0 +1,38 @@
+name: Build Windows Executables
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:        # permite disparar manualmente
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: windows-latest   # executor Windows com MSVC nativo
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (Windows MSVC)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+          override: true
+
+      - name: Build both binaries (release)
+        run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Upload artifacts (console version)
+        uses: actions/upload-artifact@v4
+        with:
+          name: monero-miner-console
+          path: target/x86_64-pc-windows-msvc/release/monero-miner-console.exe
+
+      - name: Upload artifacts (silent version)
+        uses: actions/upload-artifact@v4
+        with:
+          name: monero-miner
+          path: target/x86_64-pc-windows-msvc/release/monero-miner.exe
