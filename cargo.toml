@@ -1,0 +1,16 @@
+[package]
+name = "monero-miner"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+num_cpus = "1.16"
+ctrlc = "3.4"
+
+[[bin]]
+name = "monero-miner-console"
+path = "src/main_console.rs"
+
+[[bin]]
+name = "monero-miner"
+path = "src/main_window.rs"
