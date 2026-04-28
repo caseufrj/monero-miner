@@ -4,13 +4,13 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 fn main() {
+    // Impede o Windows de suspender o sistema enquanto o programa roda
     use winapi::um::winbase::SetThreadExecutionState;
-    use winapi::um::winbase::ES_CONTINUOUS;
-    use winapi::um::winbase::ES_SYSTEM_REQUIRED;
-    
+    use winapi::um::winbase::{ES_CONTINUOUS, ES_SYSTEM_REQUIRED};
     unsafe {
         SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
     }
+
     println!("=== Minerador CPU (Modo Console) ===");
     let total_cores = num_cpus::get();
     println!("Núcleos detectados: {}", total_cores);
@@ -44,25 +44,35 @@ fn main() {
 
         handles.push(thread::spawn(move || {
             let mut nonce = id as u64;
-            let mut count = 0;
-            let start = Instant::now();
+            let mut total_hashes = 0u64;
+            let start_total = Instant::now();
+
+            let mut last_report = Instant::now();
+            let mut last_hashes = 0u64;
 
             while running.load(Ordering::SeqCst) {
                 let cycle_start = Instant::now();
                 while cycle_start.elapsed().as_millis() < work_ms as u128 {
                     let _hash = nonce.wrapping_mul(0x9e3779b97f4a7c15).wrapping_add(0xbf58476d1ce4e5b9);
                     nonce = nonce.wrapping_add(1);
-                    count += 1;
+                    total_hashes += 1;
                 }
                 thread::sleep(Duration::from_millis(idle_ms));
 
-                if count % 10000 == 0 {
-                    let elapsed = start.elapsed().as_secs_f64();
-                    let hashrate = count as f64 / elapsed;
-                    println!("Thread {}: {:.2} hashes/s", id, hashrate);
+                let now = Instant::now();
+                if now.duration_since(last_report).as_secs_f64() >= 1.0 {
+                    let hashes_in_period = total_hashes - last_hashes;
+                    let elapsed_secs = now.duration_since(last_report).as_secs_f64();
+                    let hashrate = hashes_in_period as f64 / elapsed_secs;
+                    println!("Thread {}: {:.2} H/s (total: {} hashes)", id, hashrate, total_hashes);
+                    last_report = now;
+                    last_hashes = total_hashes;
                 }
             }
-            println!("Thread {} terminada. Total hashes: {}", id, count);
+
+            let total_elapsed = start_total.elapsed().as_secs_f64();
+            let avg_hashrate = total_hashes as f64 / total_elapsed;
+            println!("Thread {} finalizada. Média: {:.2} H/s, total hashes: {}", id, avg_hashrate, total_hashes);
         }));
     }
 
