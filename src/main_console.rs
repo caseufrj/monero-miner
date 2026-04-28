@@ -4,6 +4,13 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 fn main() {
+    use winapi::um::winbase::SetThreadExecutionState;
+    use winapi::um::winbase::ES_CONTINUOUS;
+    use winapi::um::winbase::ES_SYSTEM_REQUIRED;
+    
+    unsafe {
+        SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+    }
     println!("=== Minerador CPU (Modo Console) ===");
     let total_cores = num_cpus::get();
     println!("Núcleos detectados: {}", total_cores);
