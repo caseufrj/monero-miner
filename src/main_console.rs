@@ -36,7 +36,7 @@ fn main() {
         let idle_ms = idle_ms;
 
         handles.push(thread::spawn(move || {
-            let mut nonce: u64 = id;
+            let mut nonce = id as u64;
             let mut count = 0;
             let start = Instant::now();
 
