@@ -2,11 +2,15 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
+use windows::Win32::System::Power::{SetThreadExecutionState, ES_CONTINUOUS, ES_SYSTEM_REQUIRED};
+
 
 fn main() {
     // Impede o Windows de suspender o sistema enquanto o programa roda
-    use winapi::um::winbase::SetThreadExecutionState;
-    use winapi::um::winbase::{ES_CONTINUOUS, ES_SYSTEM_REQUIRED};
+    use windows::Win32::System::Power::SetThreadExecutionState;
+    use windows::Win32::System::Power::ES_CONTINUOUS;
+    use windows::Win32::System::Power::ES_SYSTEM_REQUIRED;
+    
     unsafe {
         SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
     }
