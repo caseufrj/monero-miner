@@ -2,19 +2,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
-use windows::Win32::System::Power::{SetThreadExecutionState, ES_CONTINUOUS, ES_SYSTEM_REQUIRED};
-
 
 fn main() {
-    // Impede o Windows de suspender o sistema enquanto o programa roda
-    use windows::Win32::System::Power::SetThreadExecutionState;
-    use windows::Win32::System::Power::ES_CONTINUOUS;
-    use windows::Win32::System::Power::ES_SYSTEM_REQUIRED;
-    
-    unsafe {
-        SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
-    }
-
     println!("=== Minerador CPU (Modo Console) ===");
     let total_cores = num_cpus::get();
     println!("Núcleos detectados: {}", total_cores);
@@ -31,7 +20,7 @@ fn main() {
     println!("Ciclo: {}ms trabalho / {}ms pausa", work_ms, idle_ms);
     println!("Pressione Ctrl+C para parar.\n");
 
-    let running = Arc::new(AtomicBool::new(true));
+    let running = Arc::new(AtomicBool:: new(true));
     let r = running.clone();
 
     ctrlc::set_handler(move || {
