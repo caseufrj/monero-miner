@@ -10,3 +10,8 @@ ctrlc = "3.4"
 [[bin]]
 name = "monero-miner-console"
 path = "src/main_console.rs"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
