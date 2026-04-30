@@ -1,4 +1,4 @@
-name: Build Windows Executable
+name: Build Windows Miner Package
 
 on:
   push:
@@ -7,21 +7,40 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2022  # use uma versão explícita com VS instalado
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: x86_64-pc-windows-msvc
           override: true
-      - name: Set up MSVC environment
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Build project
+
+      - name: Build Rust wrapper
         run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Download XMRig (official Windows release)
+        shell: pwsh
+        run: |
+          $url = "https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-msvc-win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile xmrig.zip
+          Expand-Archive -Path xmrig.zip -DestinationPath xmrig_temp
+          Copy-Item -Path "xmrig_temp\xmrig-*\xmrig.exe" -Destination "xmrig.exe"
+          Remove-Item -Recurse -Force xmrig_temp, xmrig.zip
+
+      - name: Create final package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package
+          Copy-Item -Path "target\x86_64-pc-windows-msvc\release\monero-miner-wrapper.exe" -Destination "package\monero-miner.exe"
+          Copy-Item -Path "xmrig.exe" -Destination "package\"
+          Compress-Archive -Path "package\*" -DestinationPath "monero-miner-package.zip"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: monero-miner
-          path: target/x86_64-pc-windows-msvc/release/monero-miner.exe
+          name: monero-miner-package
+          path: monero-miner-package.zip
