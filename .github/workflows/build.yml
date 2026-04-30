@@ -34,12 +34,14 @@ jobs:
       - name: Create final package
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path package
-          Copy-Item -Path "target\x86_64-pc-windows-msvc\release\monero-miner-wrapper.exe" -Destination "package\monero-miner.exe"
-          Copy-Item -Path "xmrig.exe" -Destination "package\"
-          Compress-Archive -Path "package\*" -DestinationPath "monero-miner-package.zip"
-
-      - name: Upload artifact
+          $tempDir = "package_temp"
+          New-Item -ItemType Directory -Force -Path $tempDir
+          Copy-Item "target\x86_64-pc-windows-msvc\release\monero-miner-wrapper.exe" "$tempDir\monero-miner.exe"
+          Copy-Item "xmrig.exe" "$tempDir\"
+          # Usar Compress-Archive com -Force
+          Compress-Archive -Path "$tempDir\*" -DestinationPath "monero-miner-package.zip" -Force
+          # Verificar se o zip criado tem tamanho > 0
+          if ((Get-Item "monero-miner-package.zip").Length -eq 0) { throw "Zip file is empty" }
         uses: actions/upload-artifact@v4
         with:
           name: monero-miner-package
