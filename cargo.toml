@@ -1,11 +1,9 @@
 [package]
-name = "xmrig-wrapper"
+name = "monero-miner-wrapper"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-toml = "0.8"
-serde = { version = "1.0", features = ["derive"] }
 ctrlc = "3.4"
-num_cpus = "1.16"
-winapi = { version = "0.3", features = ["winbase", "tlhelp32", "processthreadsapi", "handleapi", "synchapi"] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
