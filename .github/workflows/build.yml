@@ -1,8 +1,8 @@
-name: Build Windows Miner Package
+name: Build Windows Executable
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
       - name: Build Rust wrapper
         run: cargo build --release --target x86_64-pc-windows-msvc
 
-      - name: Download XMRig (official Windows release)
+      - name: Download XMRig
         shell: pwsh
         run: |
           $url = "https://github.com/xmrig/xmrig/releases/download/v6.22.2/xmrig-6.22.2-msvc-win64.zip"
@@ -31,18 +31,14 @@ jobs:
           Copy-Item -Path "xmrig_temp\xmrig-*\xmrig.exe" -Destination "xmrig.exe"
           Remove-Item -Recurse -Force xmrig_temp, xmrig.zip
 
-      - name: Create final package
-        shell: pwsh
-        run: |
-          $tempDir = "package_temp"
-          New-Item -ItemType Directory -Force -Path $tempDir
-          Copy-Item "target\x86_64-pc-windows-msvc\release\monero-miner-wrapper.exe" "$tempDir\monero-miner.exe"
-          Copy-Item "xmrig.exe" "$tempDir\"
-          # Usar Compress-Archive com -Force
-          Compress-Archive -Path "$tempDir\*" -DestinationPath "monero-miner-package.zip" -Force
-          # Verificar se o zip criado tem tamanho > 0
-          if ((Get-Item "monero-miner-package.zip").Length -eq 0) { throw "Zip file is empty" }
+      - name: Upload wrapper executable (no zip)
         uses: actions/upload-artifact@v4
         with:
-          name: monero-miner-package
-          path: monero-miner-package.zip
+          name: monero-miner-wrapper
+          path: target/x86_64-pc-windows-msvc/release/monero-miner-wrapper.exe
+
+      - name: Upload xmrig executable (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmrig
+          path: xmrig.exe
