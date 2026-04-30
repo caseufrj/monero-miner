@@ -60,7 +60,7 @@ fn load_or_create_config() -> MinerConfig {
     input.clear();
     io::stdin().read_line(&mut input).unwrap();
     if !input.trim().is_empty() {
-        let t = input.trim().parse().expect("Número");
+        let t: usize = input.trim().parse().expect("Número válido");
         config.threads = t.clamp(1, 4);
     }
 
@@ -91,17 +91,15 @@ impl XmrigWrapper {
     }
 
     fn start(&mut self, config: &MinerConfig) -> Result<(), Box<dyn std::error::Error>> {
-        let mut cmd = Command::new("xmrig.exe");
-        cmd.arg("--url").arg(&config.pool_url)
-           .arg("--user").arg(&config.wallet)
-           .arg("--threads").arg(config.threads.to_string())
-           .arg("--no-color")
-           .arg("--background")   // roda em segundo plano mas ainda vemos logs?
-           .arg("--log-file").arg("xmrig.log"); // opcional
-        // Para visualizar logs no console, remova --background e redirecione stdout
-        // Aqui vamos rodar sem background para ver os logs no mesmo terminal
-        let mut child = cmd.spawn()?;
-        self.child = Some(child);
+        let cmd = Command::new("xmrig.exe")
+            .arg("--url").arg(&config.pool_url)
+            .arg("--user").arg(&config.wallet)
+            .arg("--threads").arg(config.threads.to_string())
+            .arg("--no-color")
+            .arg("--background")   // roda em segundo plano mas ainda vemos logs?
+            .arg("--log-file").arg("xmrig.log")
+            .spawn()?;
+        self.child = Some(cmd);
         Ok(())
     }
 
@@ -110,6 +108,10 @@ impl XmrigWrapper {
             let _ = child.kill();
             let _ = child.wait();
         }
+    }
+
+    fn get_running_flag(&self) -> Arc<AtomicBool> {
+        self.running.clone()
     }
 }
 
@@ -131,14 +133,15 @@ fn main() {
         return;
     }
 
-    // Configura Ctrl+C para encerrar o XMRig
-    let running = wrapper.running.clone();
+    // clone para usar no closure do ctrlc
+    let running = wrapper.get_running_flag();
+    let running_clone = running.clone();
     ctrlc::set_handler(move || {
         println!("\n🛑 Encerrando minerador...");
-        running.store(false, Ordering::SeqCst);
+        running_clone.store(false, Ordering::SeqCst);
     }).expect("Erro ao configurar Ctrl+C");
 
-    // Aguarda até que o usuário peça para sair
+    // Aguarda até que o flag seja desligado
     while running.load(Ordering::SeqCst) {
         thread::sleep(Duration::from_secs(1));
     }
